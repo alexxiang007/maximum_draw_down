@@ -35,7 +35,7 @@ class Maximum_draw_down_calculator():
                             strides=(data_array.strides[0], data_array.strides[0]))
 
 
-    def rolling_max_draw_down(self, prices, window_size, log_return = False):
+    def rolling_max_draw_down(self, prices, window_size, min_window_size=1, log_return = False):
         """
         To compute the rolling maximum draw down price a price array.
 
@@ -43,32 +43,33 @@ class Maximum_draw_down_calculator():
             prices: 1d numpy array of prices
 
         output:
-            1d numpy array with length with first window_size-1 elements to be N.A
+            1d numpy array with length with first min_window_size-1 elements to be N.A
         """
 
         if log_return:
             log_prices = np.array([math.log(price) for price in prices])
-
-        prices_2d_view = self.two_dimensional_view(prices, window_size) if not log_return else self.two_dimensional_view(log_prices, window_size)
-        rolling_max = np.maximum.accumulate(prices_2d_view, axis=1)
-        
-        if log_return:
+            prices_2d_view = self.two_dimensional_view(log_prices, window_size)
+            rolling_max = np.maximum.accumulate(prices_2d_view, axis=1)
             draw_down = prices_2d_view - rolling_max
         else:
+            prices_2d_view = self.two_dimensional_view(prices, window_size)
+            rolling_max = np.maximum.accumulate(prices_2d_view, axis=1)
             draw_down = prices_2d_view / rolling_max  - 1
+        
+        head_dd = draw_down[0]
+        head_mdd = np.minimum.accumulate(head_dd)
+        for i in range(min_window_size-1):
+            head_mdd[i] = np.nan
+        head = np.array(head_mdd[:-1])
+        tail = draw_down.min(axis=1)
 
-        empty_head = np.empty(window_size-1, dtype=draw_down.dtype)
-        empty_head.fill(np.nan)
-        mdd_tail = draw_down.min(axis=1)
-
-        return np.concatenate([empty_head, mdd_tail])
+        return np.concatenate([head, tail])
 
 if __name__ == "__main__":
-    prices =  np.random.uniform(90,110,11)
+    prices =  np.random.uniform(90,110,100)
     mdd_calculator = Maximum_draw_down_calculator()
-    mdd1 = mdd_calculator.rolling_max_draw_down(prices, 10, log_return = False)
-    mdd2 = mdd_calculator.rolling_max_draw_down(prices, 10, log_return = True)
-    print(prices, "\n", mdd1, "\n", mdd2)
-    
-    # print(prices)
-    # print(mdd)
+    mdd1 = mdd_calculator.rolling_max_draw_down(prices, 10, min_window_size = 1, log_return = False)
+    mdd2 = mdd_calculator.rolling_max_draw_down(prices, 10, min_window_size = 1, log_return = True)
+    print(prices)
+    print(mdd1)
+    print(mdd2)
