@@ -69,5 +69,6 @@ if __name__ == "__main__":
     mdd1 = mdd_calculator.rolling_max_draw_down(prices, 10, log_return = False)
     mdd2 = mdd_calculator.rolling_max_draw_down(prices, 10, log_return = True)
     print(prices, "\n", mdd1, "\n", mdd2)
+    
     # print(prices)
     # print(mdd)
