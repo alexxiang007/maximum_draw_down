@@ -65,11 +65,22 @@ class Maximum_draw_down_calculator():
 
         return np.concatenate([head, tail])
 
+    def returns_to_prices(self, returns, gross_return=True):
+        prices = [1]
+        for i in range(len(returns)):
+            if gross_return:
+                prices.append(prices[i-1]*returns[i])
+            else:
+                prices.append(prices[i-1]*(returns[i]+1))
+        return np.array(prices)
+        
+
+    def rolling_max_draw_down_from_returns(self, returns, window_size, gross_return=True, min_window_size=1, log_return=False):
+        prices = self.returns_to_prices(returns, gross_return)
+        return self.rolling_max_draw_down(prices, window_size, min_window_size, log_return)
+
 if __name__ == "__main__":
-    prices =  np.random.uniform(90,110,100)
+    prices =  np.random.uniform(90, 110, 100)
     mdd_calculator = Maximum_draw_down_calculator()
-    mdd1 = mdd_calculator.rolling_max_draw_down(prices, 10, min_window_size = 1, log_return = False)
-    mdd2 = mdd_calculator.rolling_max_draw_down(prices, 10, min_window_size = 1, log_return = True)
-    print(prices)
-    print(mdd1)
-    print(mdd2)
+    mdd = mdd_calculator.rolling_max_draw_down(prices, 10, min_window_size = 1, log_return = False)
+    print(prices, mdd)
